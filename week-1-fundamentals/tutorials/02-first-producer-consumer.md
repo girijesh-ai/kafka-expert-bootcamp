@@ -547,27 +547,182 @@ graph TD
 
 ### Consumer Groups
 
-- Multiple consumers can work together
-- Each partition assigned to one consumer in the group
-- Automatic rebalancing when consumers join/leave
+Consumer groups enable horizontal scaling and fault tolerance:
+
+- **Parallel Processing**: Multiple consumers work together to process a topic
+- **Partition Assignment**: Each partition is assigned to exactly one consumer in the group
+- **Load Balancing**: Work is automatically distributed across available consumers
+- **Fault Tolerance**: If a consumer fails, its partitions are reassigned to other consumers
+- **Rebalancing**: Automatic redistribution when consumers join or leave the group
+
+**Key Rules**:
+- One partition → One consumer (within a group)
+- Multiple consumers can consume the same partition (different groups)
+- More consumers than partitions = some consumers will be idle
 
 ### Offset Management
 
-- **Auto-commit**: Convenient but may lose messages
-- **Manual commit**: More reliable, commit after processing
-- **Offset reset**: Where to start if no committed offset
+Offsets track consumer progress and enable different delivery semantics:
 
-## Common Patterns and Best Practices
+**Auto-commit vs Manual commit**:
+- **Auto-commit (`enable.auto.commit=True`)**:
+  - Convenient for simple use cases
+  - Risk of message loss if consumer crashes after commit but before processing
+  - Risk of duplicate processing if consumer crashes after processing but before commit
 
-### Producer Patterns:
-1. **Fire-and-forget**: Send without waiting for acknowledgment
-2. **Synchronous send**: Wait for acknowledgment before continuing
-3. **Asynchronous send**: Use callbacks for acknowledgment
+- **Manual commit (`enable.auto.commit=False`)**:
+  - More control over exactly when offsets are committed
+  - Commit after successful processing for at-least-once delivery
+  - Commit before processing for at-most-once delivery
 
-### Consumer Patterns:
-1. **At-most-once**: Commit before processing (may lose messages)
-2. **At-least-once**: Commit after processing (may duplicate)
-3. **Exactly-once**: Use transactions (complex but ideal)
+**Offset Reset Strategies**:
+- **earliest**: Start from the beginning of the topic
+- **latest**: Start from the most recent messages
+- **none**: Throw error if no committed offset exists
+
+## Delivery Semantics and Patterns
+
+### Message Delivery Guarantees
+
+**At-Most-Once Delivery**:
+- Messages may be lost but never duplicated
+- Commit offset before processing message
+- If consumer crashes after commit but before processing → message lost
+- Use case: Metrics, logs where occasional loss is acceptable
+
+**At-Least-Once Delivery**:
+- Messages are never lost but may be duplicated
+- Process message, then commit offset
+- If consumer crashes after processing but before commit → message reprocessed
+- Use case: Most business applications (handle duplicates in application logic)
+
+**Exactly-Once Delivery**:
+- Messages are neither lost nor duplicated
+- Requires transactional producers and idempotent consumers
+- Complex but provides strongest guarantees
+- Use case: Financial transactions, critical business processes
+
+### Producer Patterns
+
+**1. Fire-and-Forget Pattern**:
+```python
+# Fastest but least reliable
+producer.produce(topic, value=message)
+# Don't wait for acknowledgment
+```
+
+**2. Synchronous Send Pattern**:
+```python
+# Reliable but slower
+producer.produce(topic, value=message)
+producer.flush()  # Wait for all messages to be sent
+```
+
+**3. Asynchronous Send with Callbacks**:
+```python
+# Balance of performance and reliability
+def delivery_callback(err, msg):
+    if err:
+        # Handle error (retry, log, etc.)
+        handle_error(err, msg)
+    else:
+        # Message delivered successfully
+        log_success(msg)
+
+producer.produce(topic, value=message, callback=delivery_callback)
+```
+
+### Consumer Patterns
+
+**1. Simple Polling Loop**:
+```python
+while True:
+    msg = consumer.poll(timeout=1.0)
+    if msg and not msg.error():
+        process_message(msg)
+        consumer.commit(msg)  # Manual commit
+```
+
+**2. Batch Processing**:
+```python
+messages = []
+while len(messages) < batch_size:
+    msg = consumer.poll(timeout=0.1)
+    if msg and not msg.error():
+        messages.append(msg)
+
+# Process entire batch
+process_batch(messages)
+# Commit only the last message in batch
+consumer.commit(messages[-1])
+```
+
+**3. Error Handling with Retry**:
+```python
+def process_with_retry(msg, max_retries=3):
+    for attempt in range(max_retries):
+        try:
+            process_message(msg)
+            consumer.commit(msg)
+            return
+        except RetryableError:
+            if attempt == max_retries - 1:
+                send_to_dead_letter_queue(msg)
+            else:
+                time.sleep(2 ** attempt)  # Exponential backoff
+```
+
+### Error Handling Best Practices
+
+**1. Distinguish Error Types**:
+- **Transient errors**: Network issues, temporary service unavailability
+- **Poison messages**: Malformed data that will always fail
+- **Business logic errors**: Valid message but business rule violation
+
+**2. Retry Strategies**:
+- **Immediate retry**: For very transient issues
+- **Exponential backoff**: For system overload situations
+- **Dead letter queue**: For messages that repeatedly fail
+
+**3. Circuit Breaker Pattern**:
+```python
+class CircuitBreaker:
+    def __init__(self, failure_threshold=5, timeout=60):
+        self.failure_count = 0
+        self.failure_threshold = failure_threshold
+        self.timeout = timeout
+        self.last_failure_time = None
+        self.state = 'CLOSED'  # CLOSED, OPEN, HALF_OPEN
+
+    def call_service(self, func, *args, **kwargs):
+        if self.state == 'OPEN':
+            if time.time() - self.last_failure_time > self.timeout:
+                self.state = 'HALF_OPEN'
+            else:
+                raise CircuitBreakerOpenException()
+
+        try:
+            result = func(*args, **kwargs)
+            self.reset()
+            return result
+        except Exception as e:
+            self.record_failure()
+            raise e
+```
+
+### Performance Optimization
+
+**Producer Optimizations**:
+- **Batching**: Use `batch.size` and `linger.ms` to group messages
+- **Compression**: Enable `compression.type` (snappy, lz4, gzip)
+- **Async sending**: Don't wait for each message acknowledgment
+- **Connection pooling**: Reuse producer instances
+
+**Consumer Optimizations**:
+- **Fetch sizing**: Tune `fetch.min.bytes` and `fetch.max.wait.ms`
+- **Parallel processing**: Use multiple consumers in same group
+- **Memory management**: Process and commit in reasonable batch sizes
+- **Connection management**: Monitor session timeouts and heartbeats
 
 ## Next Steps
 
