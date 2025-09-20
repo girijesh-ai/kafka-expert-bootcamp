@@ -11,16 +11,35 @@ After completing this tutorial, you will:
 
 ## Message Anatomy
 
-Every Kafka message consists of:
+Every Kafka message consists of several components that work together:
 
-```
-┌─────────────────────────────────────────┐
-│                MESSAGE                  │
-├─────────────────────────────────────────┤
-│ Key (optional)    │ Value (required)    │
-│ Partition Info    │ Timestamp          │
-│ Headers (optional)│ Offset             │
-└─────────────────────────────────────────┘
+```mermaid
+graph TD
+    subgraph "Kafka Message Structure"
+        subgraph "Routing & Identification"
+            KEY[Key<br/>Optional identifier<br/>for partitioning]
+            PARTITION[Partition<br/>Determines destination<br/>partition]
+            OFFSET[Offset<br/>Unique position<br/>within partition]
+        end
+
+        subgraph "Message Content"
+            VALUE[Value<br/>Actual message payload<br/>JSON, Avro, etc.]
+            HEADERS[Headers<br/>Optional metadata<br/>key-value pairs]
+            TIMESTAMP[Timestamp<br/>When message<br/>was produced]
+        end
+
+        KEY --> PARTITION
+        PARTITION --> OFFSET
+        VALUE --> HEADERS
+        HEADERS --> TIMESTAMP
+    end
+
+    style KEY fill:#e1f5fe
+    style VALUE fill:#e8f5e8
+    style PARTITION fill:#f3e5f5
+    style OFFSET fill:#fff3e0
+    style HEADERS fill:#fce4ec
+    style TIMESTAMP fill:#f1f8e9
 ```
 
 ### Key Components:
@@ -489,6 +508,35 @@ Producer example completed!
 
 ### Message Keys and Partitioning
 
+```mermaid
+graph TD
+    subgraph "Message Routing Strategies"
+        subgraph "With Key (Guaranteed Ordering)"
+            K1[Message: user_001, login] --> P1[Partition 1]
+            K2[Message: user_001, purchase] --> P1
+            K3[Message: user_001, logout] --> P1
+            K4[Message: user_002, login] --> P2[Partition 2]
+            K5[Message: user_002, purchase] --> P2
+        end
+
+        subgraph "Without Key (Load Balancing)"
+            NK1[Message: anonymous event] --> P1_RR[Partition 0]
+            NK2[Message: anonymous event] --> P2_RR[Partition 1]
+            NK3[Message: anonymous event] --> P3_RR[Partition 2]
+            NK4[Message: anonymous event] --> P1_RR
+        end
+    end
+
+    style K1 fill:#e8f5e8
+    style K2 fill:#e8f5e8
+    style K3 fill:#e8f5e8
+    style K4 fill:#f3e5f5
+    style K5 fill:#f3e5f5
+    style P1 fill:#e8f5e8
+    style P2 fill:#f3e5f5
+```
+
+**Key Benefits:**
 1. **With Key**: Messages with the same key go to the same partition
    - Ensures ordering for related messages
    - Example: All events for `user_001` in same partition
