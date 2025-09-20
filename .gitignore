@@ -1,0 +1,172 @@
+# Kafka Tutorial - Comprehensive .gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+kafka-venv/
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# Docker
+.dockerignore
+
+# Kafka and Zookeeper data (Docker volumes)
+docker/kafka-data/
+docker/zookeeper-data/
+docker/zookeeper-logs/
+
+# Kafka logs and state
+*.log
+kafka-logs/
+zookeeper/
+connect.offsets
+connect.status
+connect.config
+
+# Configuration files with secrets
+.env.local
+.env.production
+config/secrets.yml
+config/production.yml
+**/secrets/
+
+# SSL certificates and keys
+*.pem
+*.key
+*.crt
+*.csr
+*.p12
+*.jks
+*.truststore
+*.keystore
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Application specific
+# Claude Code internal files
+CLAUDE.md
+
+# Student work directories (for individual progress)
+students/*/
+submissions/*/
+
+# Performance and profiling
+*.prof
+*.pstats
+
+# Documentation builds
+docs/_build/
+site/
+
+# Package files
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Kafka Connect
+connect-logs/
+connect-configs/
+connect-offsets/
+connect-status/
+
+# Schema Registry
+schema-registry-logs/
+
+# Confluent Platform
+confluent.current/
+
+# Local development overrides
+docker-compose.override.yml
+local-config.yml
+
+# Backup files
+*.bak
+*.backup
+
+# Lock files (keep requirements.txt but ignore lock files)
+Pipfile.lock
+poetry.lock
+
+# Local environment variables
+.env.local
+.env.*.local
+
+# Generated assets and reports
+reports/
+assets/generated/
+
+# Node modules (if any frontend tools are added)
+node_modules/

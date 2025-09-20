@@ -1,0 +1,88 @@
+[project]
+name = "kafka-tutorial"
+version = "0.1.0"
+description = "Production-grade Kafka training tutorial"
+authors = [
+    {name = "Kafka Expert", email = "expert@kafka-training.com"}
+]
+readme = "README.md"
+requires-python = ">=3.9"
+
+dependencies = [
+    # Core Kafka Client
+    "confluent-kafka[avro,json,protobuf]>=2.3.0",
+
+    # Data Processing
+    "pandas>=2.1.0",
+    "numpy>=1.24.0",
+
+    # Async Support
+    "aiofiles>=23.0.0",
+
+    # Monitoring and Metrics
+    "prometheus-client>=0.19.0",
+
+    # Logging and Configuration
+    "structlog>=23.0.0",
+    "python-dotenv>=1.0.0",
+    "pyyaml>=6.0.0",
+
+    # CLI Tools
+    "click>=8.0.0",
+    "rich>=13.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.7.0",
+]
+
+docs = [
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.4.0",
+]
+
+visualization = [
+    "matplotlib>=3.8.0",
+    "seaborn>=0.13.0",
+    "plotly>=5.17.0",
+]
+
+[project.scripts]
+kafka-tutorial = "src.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "--cov=src --cov-report=html --cov-report=term-missing"
