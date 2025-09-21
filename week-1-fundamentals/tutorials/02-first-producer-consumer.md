@@ -382,14 +382,14 @@ class BasicConsumer:
         user_id = data.get('user_id')
 
         if action == 'login':
-            print(f"  📝 User {user_id} logged in")
+            print(f"   User {user_id} logged in")
         elif action == 'purchase':
             amount = data.get('amount', 0)
-            print(f"  💰 User {user_id} made purchase: ${amount}")
+            print(f"   User {user_id} made purchase: ${amount}")
         elif action == 'logout':
-            print(f"  👋 User {user_id} logged out")
+            print(f"   User {user_id} logged out")
         else:
-            print(f"  ❓ Unknown action: {action}")
+            print(f"   Unknown action: {action}")
 
     def _handle_error(self, error):
         """
